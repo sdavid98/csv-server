@@ -7,10 +7,14 @@ from flask_restful import Resource, Api, abort, reqparse
 app = Flask(__name__)
 api = Api(app)
 
+DEFAULT_LIMIT = -1
+DEFAULT_OFFSET = 0
+
 parser = reqparse.RequestParser()
 parser.add_argument('limit', type=int, required=False,
-                    location='args')
-parser.add_argument('offset', type=int, required=False, location='args')
+                    location='args', default=DEFAULT_LIMIT)
+parser.add_argument('offset', type=int, required=False,
+                    location='args', default=DEFAULT_OFFSET)
 
 
 def get_path(filename):
@@ -21,9 +25,7 @@ def csv_exists(filename):
     return path.isfile(get_path(filename))
 
 
-def read_csv(filename, limit=-1, offset=0):
-    limit = limit or -1
-    offset = offset or 0
+def read_csv(filename, limit, offset):
     data = []
 
     with open(get_path(filename)) as csvfile:
@@ -52,7 +54,7 @@ class CsvData(Resource):
             abort(404, message='The requested resource does not exist!')
 
         args = parser.parse_args()
-        return read_csv(filename, **args)
+        return read_csv(filename, limit=args['limit'], offset=args['offset'])
 
 
 api.add_resource(CsvData, '/<filename>')
